@@ -6,13 +6,22 @@ from utils import connect_to_redis
 import os
 import socket
 import random
+import urlparse
+import redis
 import json
 
+
+port = int(os.getenv('PORT'))
 option_a = os.getenv('OPTION_A', "Cats")
 option_b = os.getenv('OPTION_B', "Dogs")
-hostname = socket.gethostname()
+hostname = os.getenv('VCAP_APP_HOST') 
 
-redis = connect_to_redis("redis")
+
+rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0]
+credentials = rediscloud_service['credentials']
+redis = redis.Redis(host=credentials['hostname'], port=credentials['port'], password=credentials['password'])
+#redis = connect_to_redis("redis")
+
 app = Flask(__name__)
 
 
@@ -41,4 +50,4 @@ def hello():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=True)
