@@ -1,8 +1,13 @@
 ---
 applications:
 - name: worker
-  memory: 2G
+  memory: 1G
   disk_quota: 1G
   instances: 1
   path: target/worker-jar-with-dependencies.jar
   no-route: true
+  services:
+    - voterappRedis
+    - workerPostgresSQL
+  timeout: 180 
+  health-check-type: none
