@@ -1,0 +1,7 @@
+---
+applications:
+- name: voterapp
+  memory: 1G
+  disk_quota: 1G
+  random-route: true
+  buildpack: python_buildpack
