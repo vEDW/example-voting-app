@@ -20,7 +20,6 @@ hostname = os.getenv('VCAP_APP_HOST')
 rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0]
 credentials = rediscloud_service['credentials']
 redis = redis.Redis(host=credentials['hostname'], port=credentials['port'], password=credentials['password'])
-#redis = connect_to_redis("redis")
 
 app = Flask(__name__)
 
