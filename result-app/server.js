@@ -1,3 +1,9 @@
+// parsing rediscloud credentials
+var vcap_services = process.env.VCAP_SERVICES;
+var rediscloud_service = JSON.parse(vcap_services)["elephantsql"][0]
+var credentials = rediscloud_service.credentials;
+
+
 var express = require('express'),
     async = require('async'),
     pg = require("pg"),
@@ -24,7 +30,7 @@ io.sockets.on('connection', function (socket) {
 async.retry(
   {times: 1000, interval: 1000},
   function(callback) {
-    pg.connect('postgres://postgres@db/postgres', function(err, client, done) {
+    pg.connect(credentials.uri, function(err, client, done) {
       if (err) {
         console.error("Failed to connect to db");
       }
