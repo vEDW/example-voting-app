@@ -5,3 +5,5 @@ applications:
   disk_quota: 1G
   random-route: true
   buildpack: python_buildpack
+  services:
+    - voterappRedis
