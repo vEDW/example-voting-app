@@ -8,6 +8,6 @@ applications:
   no-route: true
   services:
     - voterappRedis
-    - workerPostgresSQL
+    - workerPostgresSQL 
   timeout: 180 
   health-check-type: none
