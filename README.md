@@ -1,4 +1,4 @@
-This is a fork of the docker compose application and deconstructed to deploy microservices on Cloud Foundry. 
+This is a fork of the docker compose application and deconstructed to deploy as individual microservices on Cloud Foundry. 
 
 
 Example Voting App
