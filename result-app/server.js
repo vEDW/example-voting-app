@@ -1,7 +1,7 @@
 // parsing rediscloud credentials
 var vcap_services = process.env.VCAP_SERVICES;
-var rediscloud_service = JSON.parse(vcap_services)["elephantsql"][0]
-var credentials = rediscloud_service.credentials;
+var postgreSQL_service = JSON.parse(vcap_services)["elephantsql"][0]
+var credentials = postgreSQL_service.credentials;
 
 
 var express = require('express'),
