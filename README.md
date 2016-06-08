@@ -20,9 +20,9 @@ Architecture
 Running
 -------
 
-create redis service named voterappRedis
-create postgresql service named workerPostgresSQL
-go to folder voting-app/ and execute a cf push in that folder
-go to folder worker/ and execute a cf push in that folder
-go to folder result-app/ and execute a cf push in that folder
+* create redis service named voterappRedis (via apps console or commandline "cf cs rediscloud 30mb voterappRedis")
+* create postgresql service named workerPostgresSQL (via apps console or command line "cf cs elephantsql turtle workerPostgresSQL") 
+* go to folder voting-app/ and execute a "cf push" in that folder
+* go to folder worker/ and execute a "mvn clean", "mvn package" and "cf push" in that folder
+* go to folder result-app/ and execute a "cf push" in that folder
 
