@@ -1,3 +1,6 @@
+This is a fork of the docker compose application and deconstructed to deploy microservices on Cloud Foundry. 
+
+
 Example Voting App
 ==================
 
@@ -9,25 +12,17 @@ Architecture
 -----
 
 * A Python webapp which lets you vote between two options
-* A Redis queue which collects new votes
+* A Redis queue which collects new votes provided by Cloud Foundry service broker
 * A Java worker which consumes votes and stores them in…
-* A Postgres database backed by a Docker volume
+* A Postgres database backed by a Cloud Foundry service broker
 * A Node.js webapp which shows the results of the voting in real time
 
 Running
 -------
 
-Run in this directory:
+create redis service named voterappRedis
+create postgresql service named workerPostgresSQL
+go to folder voting-app/ and execute a cf push in that folder
+go to folder worker/ and execute a cf push in that folder
+go to folder result-app/ and execute a cf push in that folder
 
-    $ docker-compose up
-
-The app will be running on port 5000 on your Docker host, and the results will be on port 5001.
-
-Docker Hub images
------------------
-
-Docker Hub images for services in this app are built automatically from master:
-
- - [docker/example-voting-app-voting-app](https://hub.docker.com/r/docker/example-voting-app-voting-app/)
- - [docker/example-voting-app-result-app](https://hub.docker.com/r/docker/example-voting-app-result-app/)
- - [docker/example-voting-app-worker](https://hub.docker.com/r/docker/example-voting-app-worker/)
