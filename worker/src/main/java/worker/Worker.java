@@ -1,18 +1,46 @@
 package worker;
 
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.Protocol;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import java.sql.*;
 import org.json.JSONObject;
+import argo.jdom.JdomParser;
+import argo.jdom.JsonNode;
+import argo.jdom.JsonRootNode;
 
 class Worker {
   public static void main(String[] args) {
     try {
-      Jedis redis = connectToRedis("redis");
-      Connection dbConn = connectToDB("db");
+      /*Removing to change to connecting services in PCF
+       * Jedis redis = connectToRedis("redis");
+       * Connection dbConn = connectToDB("db");*/
+   
+      String vcap_services = System.getenv("VCAP_SERVICES");
+      JsonNode postgreSQLcredentials = null;
+      JsonNode rediscredentials = null;
+    		  
+      if (vcap_services != null && vcap_services.length() > 0) {
+    	  // parsing rediscloud credentials
+    	  JsonRootNode root = new JdomParser().parse(vcap_services);
+    	  
+    	  //get redis credentials
+          JsonNode rediscloudNode = root.getNode("rediscloud");
+          rediscredentials = rediscloudNode.getNode(0).getNode("credentials");
+          
+          //get postgreSQL credentials
+          JsonNode postgreSQLcloudNode = root.getNode("elephantsql");
+          postgreSQLcredentials = postgreSQLcloudNode.getNode(0).getNode("credentials");
+       
+      }
+      
+      Jedis redis = connectToRedis(rediscredentials);
+      Connection dbConn = connectToDB(postgreSQLcredentials);
 
-      System.err.println("Watching vote queue");
-
+      System.out.println("Watching vote queue to see what comes in");
+      
       while (true) {
         String voteJSON = redis.blpop(0, "votes").get(1);
         JSONObject voteData = new JSONObject(voteJSON);
@@ -22,7 +50,7 @@ class Worker {
         System.err.printf("Processing vote for '%s' by '%s'\n", vote, voterID);
         updateVote(dbConn, voterID, vote);
       }
-    } catch (SQLException e) {
+    } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);
     }
@@ -45,36 +73,40 @@ class Worker {
     }
   }
 
-  static Jedis connectToRedis(String host) {
-    Jedis conn = new Jedis(host);
-
-    while (true) {
-      try {
-        conn.keys("*");
-        break;
-      } catch (JedisConnectionException e) {
-        System.err.println("Failed to connect to redis - retrying");
-        sleep(1000);
-      }
-    }
-
-    System.err.println("Connected to redis");
-    return conn;
+  static Jedis connectToRedis(JsonNode credentials) {
+      JedisPool pool = new JedisPool(new JedisPoolConfig(),
+              credentials.getStringValue("hostname"),
+              Integer.parseInt(credentials.getStringValue("port")),
+              Protocol.DEFAULT_TIMEOUT,
+              credentials.getStringValue("password"));
+    return pool.getResource();
   }
 
-  static Connection connectToDB(String host) throws SQLException {
+  static Connection connectToDB(JsonNode credentials) throws SQLException {
     Connection conn = null;
-
+    
     try {
-
-      Class.forName("org.postgresql.Driver");
-      String url = "jdbc:postgresql://" + host + "/postgres";
-
+    	Class.forName("org.postgresql.Driver");
+    } catch (ClassNotFoundException e) {
+        System.out.println("Class not found " + e);
+    }
+    
+    //parse out credentials from URI string
+    String uri = credentials.getStringValue("uri");
+    String host = uri.substring(uri.lastIndexOf("@") + 1 , uri.length());
+    //username and password parse:
+    String userName = uri.substring(uri.indexOf("://") + 3 , uri.length());
+    String passWord = userName;
+    userName = userName.substring(0, userName.indexOf(":"));
+    passWord = passWord.substring(passWord.indexOf(":") +1 , passWord.indexOf("@"));
+    
       while (conn == null) {
         try {
-          conn = DriverManager.getConnection(url, "postgres", "");
+          conn = DriverManager.getConnection("jdbc:postgresql://" + host, userName, passWord);
+          System.out.println("connected to db");
+        	
         } catch (SQLException e) {
-          System.err.println("Failed to connect to db - retrying");
+          System.err.println("Failed to connect to db - retrying " + e.toString());
           sleep(1000);
         }
       }
@@ -82,11 +114,6 @@ class Worker {
       PreparedStatement st = conn.prepareStatement(
         "CREATE TABLE IF NOT EXISTS votes (id VARCHAR(255) NOT NULL UNIQUE, vote VARCHAR(255) NOT NULL)");
       st.executeUpdate();
-
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-      System.exit(1);
-    }
 
     return conn;
   }
