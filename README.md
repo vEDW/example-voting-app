@@ -17,7 +17,7 @@ Architecture
 * A Postgres database backed by a Cloud Foundry service broker
 * A Node.js webapp which shows the results of the voting in real time
 
-Running
+Running on Pivotal Web Services
 -------
 
 * create redis service named voterappRedis (via apps console or commandline "cf cs rediscloud 30mb voterappRedis")
