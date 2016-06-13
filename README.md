@@ -30,8 +30,8 @@ Running on Pivotal Web Services
 Running on Pivotal Cloud Foundry
 -------
 Pre-req: 
-* install Redis Service Tile 
-* install mySql Service Tile
+* install Pivotal Redis Service Tile 
+* install Pivotal mySql Service Tile
 
 Running Application:
 
