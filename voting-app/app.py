@@ -16,11 +16,15 @@ option_a = os.getenv('OPTION_A', "Cats")
 option_b = os.getenv('OPTION_B', "Dogs")
 hostname = os.getenv('VCAP_APP_HOST') 
 
-
-rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0]
-credentials = rediscloud_service['credentials']
-redis = redis.Redis(host=credentials['hostname'], port=credentials['port'], password=credentials['password'])
-
+try:
+    rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0]
+    credentials = rediscloud_service['credentials']
+    redis = redis.Redis(host=credentials['hostname'], port=credentials['port'], password=credentials['password'])
+except:
+    rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['p-redis'][0]
+    credentials = rediscloud_service['credentials']
+    redis = redis.Redis(host=credentials['host'], port=credentials['port'], password=    credentials['password'])
+    
 app = Flask(__name__)
 
 

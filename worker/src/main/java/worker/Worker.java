@@ -6,6 +6,7 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import java.sql.*;
+
 import org.json.JSONObject;
 import argo.jdom.JdomParser;
 import argo.jdom.JsonNode;
@@ -21,23 +22,71 @@ class Worker {
       String vcap_services = System.getenv("VCAP_SERVICES");
       JsonNode postgreSQLcredentials = null;
       JsonNode rediscredentials = null;
-    		  
+      JsonNode p_rediscredentials = null;
+      JsonNode mySQLCredentials = null;
+      
+      Connection dbConn = null;
+      Jedis redis = null;
+      
       if (vcap_services != null && vcap_services.length() > 0) {
-    	  // parsing rediscloud credentials
+    	  
     	  JsonRootNode root = new JdomParser().parse(vcap_services);
     	  
-    	  //get redis credentials
-          JsonNode rediscloudNode = root.getNode("rediscloud");
-          rediscredentials = rediscloudNode.getNode(0).getNode("credentials");
+    	  // parsing rediscloud credentials
+    	  try{
+    		  
+    		  JsonNode rediscloudNode = root.getNode("rediscloud");
+              rediscredentials = rediscloudNode.getNode(0).getNode("credentials");
+          }
+    	  catch (IllegalArgumentException ex){
+    		  
+    		  JsonNode rediscloudNode = root.getNode("p-redis");
+    		  p_rediscredentials = rediscloudNode.getNode(0).getNode("credentials");
+    	  }
+          
           
           //get postgreSQL credentials
-          JsonNode postgreSQLcloudNode = root.getNode("elephantsql");
-          postgreSQLcredentials = postgreSQLcloudNode.getNode(0).getNode("credentials");
+          try{
+        	  JsonNode postgreSQLcloudNode = root.getNode("elephantsql");
+              postgreSQLcredentials = postgreSQLcloudNode.getNode(0).getNode("credentials");
+          }
+          catch (IllegalArgumentException ex){
+        	 //nothing happends, we just won't use postgreSQL connection 
+          }
+          
+          //get a mySQl credential 
+          try{
+        	  
+        	  JsonNode postgreSQLcloudNode = root.getNode("p-mysql");
+        	  mySQLCredentials = postgreSQLcloudNode.getNode(0).getNode("credentials");
+          }
+          catch (IllegalArgumentException ex)
+          {
+        	  //nothing wrong with not catching some creds for database
+          }
+          
+          
        
       }
+      if (rediscredentials != null){
+    	  redis = connectToRedis(rediscredentials);       
+      }
+      else{
+    	  redis = connectToPivotalRedis(p_rediscredentials);   
+      }
+    	  
       
-      Jedis redis = connectToRedis(rediscredentials);
-      Connection dbConn = connectToDB(postgreSQLcredentials);
+      //determine which dataservice we'll use. Will default to postgreSQL
+      if (postgreSQLcredentials != null){
+    	  dbConn = connectToPostgreDB(postgreSQLcredentials);
+    	  System.out.println("Connected to Redis on PWS");	
+      }
+      else if (mySQLCredentials != null){
+    	  dbConn = connectToMySQLDB(mySQLCredentials);
+    	  System.out.println("Connected to P-Redis on PCF");
+      }
+      	
+
 
       System.out.println("Watching vote queue to see what comes in");
       
@@ -81,8 +130,48 @@ class Worker {
               credentials.getStringValue("password"));
     return pool.getResource();
   }
+  
+  static Jedis connectToPivotalRedis(JsonNode credentials) {
+	  JedisPool pool = new JedisPool(new JedisPoolConfig(),
+              credentials.getStringValue("host"),
+              Integer.parseInt(credentials.getNumberValue("port")),
+              Protocol.DEFAULT_TIMEOUT,
+              credentials.getStringValue("password"));
+    return pool.getResource();
+  }
+  
+  static Connection connectToMySQLDB (JsonNode credentials) throws SQLException{
+	  Connection conn = null;
+	  
+	  try {
+		  Class.forName("com.mysql.jdbc.Driver");
+	  }
+	  catch (ClassNotFoundException e) {
+      System.out.println("Class not found " + e);
+	  }
+	  
+	  String url = credentials.getStringValue("jdbcUrl");
+	  
+	  while (conn == null) {
+	        try {
+	          conn = DriverManager.getConnection(url);
+	          System.out.println("connected to db");
+	        	
+	        } catch (SQLException e) {
+	          System.err.println("Failed to connect to db - retrying " + e.toString());
+	          sleep(1000);
+	        }
+	  }
+	  
+	  PreparedStatement st = conn.prepareStatement(
+		        "CREATE TABLE IF NOT EXISTS votes (id VARCHAR(255) NOT NULL UNIQUE, vote VARCHAR(255) NOT NULL)");
+		      st.executeUpdate();
+	 
+	 return conn;
+	  
+  }
 
-  static Connection connectToDB(JsonNode credentials) throws SQLException {
+  static Connection connectToPostgreDB(JsonNode credentials) throws SQLException {
     Connection conn = null;
     
     try {
