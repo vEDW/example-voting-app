@@ -12,8 +12,8 @@ import json
 
 
 port = int(os.getenv('PORT'))
-option_a = os.getenv('OPTION_A', "Cats")
-option_b = os.getenv('OPTION_B', "Dogs")
+option_a = os.getenv('OPTION_A', "Hillary")
+option_b = os.getenv('OPTION_B', "Trump")
 hostname = os.getenv('VCAP_APP_HOST') 
 
 
