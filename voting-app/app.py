@@ -54,9 +54,9 @@ def hello():
     return resp
 
 
-@app.route('/shutdown', methods=['POST'])
+@app.route('/shutdown', methods=['POST','GET'])
 def shutdown():
-    #shutdown_server()
+    shutdown_server()
     return 'Server shutting down...'
 
 if __name__ == "__main__":

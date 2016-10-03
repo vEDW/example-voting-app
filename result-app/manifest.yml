@@ -3,6 +3,6 @@ applications:
 - name: resultsapp
   memory: 1G
   instances: 1
-  host: resultsapp
+  random-route: true
   services:
     - workerPostgresSQL
