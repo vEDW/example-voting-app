@@ -15,7 +15,7 @@ port = int(os.getenv('PORT'))
 option_a = os.getenv('OPTION_A', "Hillary")
 option_b = os.getenv('OPTION_B', "Trump")
 hostname = os.getenv('VCAP_APP_HOST') 
-
+hostnameString = os.getenv('CF_INSTANCE_IP') + ':' + os.getenv('CF_INSTANCE_INDEX') + ':' + os.getenv('CF_INSTANCE_PORT') 
 
 rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0]
 credentials = rediscloud_service['credentials']
