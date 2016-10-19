@@ -30,13 +30,13 @@ Running on Pivotal Web Services
 Running on Pivotal Cloud Foundry
 -------
 Pre-req: 
-* install Pivotal Redis Service Tile 
-* install Pivotal mySql Service Tile
+* install Pivotal Redis Service Tile P-Redis 
+* install Dingo Postgresql Service Tile
 
 Running Application:
 
-* create redis service named voterappRedis (via apps console or commandline "cf create-service p-redis shared-vm voterappRedis")
-* create postgresql service named workerPostgresSQL (via apps console or command line "cf create-service p-mysql 100mb-dev workerMySQL") 
+* create redis service named voterappRedis (via apps console or commandline "cf cs p-redis shared-vm voterappRedis")
+* create postgresql service named workerPostgresSQL (via apps console or command line "cf cs dingo-postgresql cluster workerPostgresSQL") 
 * go to folder voting-app/ and execute a "cf push" in that folder
 * go to folder worker/ and execute a "mvn clean", "mvn package" and "cf push" in that folder
 * go to folder result-app/ and execute a "cf push" in that folder
