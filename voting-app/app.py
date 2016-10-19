@@ -20,10 +20,7 @@ hostnameString = '( IP:' + os.getenv('CF_INSTANCE_IP') + ': Index: ' + os.getenv
 
 vcap = json.loads(os.environ['VCAP_SERVICES'])
 
-if 'rediscloud' in vcap:
-    rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0]
-elif 'p-redis' in vcap:
-    rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['p-redis'][0]
+rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0] if 'rediscloud' in vcap else json.loads(os.environ['VCAP_SERVICES'])['p-redis'][0]
 
 credentials = rediscloud_service['credentials']
 
