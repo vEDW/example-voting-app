@@ -27,13 +27,23 @@ class Worker {
     	  JsonRootNode root = new JdomParser().parse(vcap_services);
     	  
     	  //get redis credentials
-          JsonNode rediscloudNode = root.getNode("rediscloud");
-          rediscredentials = rediscloudNode.getNode(0).getNode("credentials");
-          
+    	  if (root.isStringValue("rediscloud") ){
+    		  rediscredentials = root.getNode("rediscloud").getNode(0).getNode("credentials");	
+    	  }
+    	  else
+    	  {
+    		  rediscredentials = root.getNode("p-redis").getNode(0).getNode("credentials");
+    	  }
+    	  
           //get postgreSQL credentials
-          JsonNode postgreSQLcloudNode = root.getNode("elephantsql");
-          postgreSQLcredentials = postgreSQLcloudNode.getNode(0).getNode("credentials");
-       
+          if (root.isStringValue("elephantsql")){
+        	  postgreSQLcredentials = root.getNode("elephantsql").getNode(0).getNode("credentials");
+          }
+          else
+          {
+        	  postgreSQLcredentials = root.getNode("dingo-postgresql").getNode(0).getNode("credentials");
+          }
+    	  
       }
       
       Jedis redis = connectToRedis(rediscredentials);
@@ -74,15 +84,25 @@ class Worker {
   }
 
   static Jedis connectToRedis(JsonNode credentials) {
+	  
+	  String redishost = "";
+	  
+	  //check if it's host or hostname depending on the service
+	  if (credentials.isStringValue("hostname"))
+		  redishost = credentials.getStringValue("hostname");
+	  else
+		  redishost = credentials.getStringValue("host");
+		  
       JedisPool pool = new JedisPool(new JedisPoolConfig(),
-              credentials.getStringValue("hostname"),
-              Integer.parseInt(credentials.getStringValue("port")),
+    		  redishost,
+              Integer.parseInt(credentials.getNumberValue("port")),
               Protocol.DEFAULT_TIMEOUT,
               credentials.getStringValue("password"));
     return pool.getResource();
   }
 
   static Connection connectToDB(JsonNode credentials) throws SQLException {
+	  
     Connection conn = null;
     
     try {
@@ -91,14 +111,28 @@ class Worker {
         System.out.println("Class not found " + e);
     }
     
-    //parse out credentials from URI string
-    String uri = credentials.getStringValue("uri");
-    String host = uri.substring(uri.lastIndexOf("@") + 1 , uri.length());
-    //username and password parse:
-    String userName = uri.substring(uri.indexOf("://") + 3 , uri.length());
-    String passWord = userName;
-    userName = userName.substring(0, userName.indexOf(":"));
-    passWord = passWord.substring(passWord.indexOf(":") +1 , passWord.indexOf("@"));
+    String uri = "";
+    String host = "";
+    String userName = "";
+    String passWord = "";
+    
+    //check whether if using PWS or On-Prem
+    
+    //if it has host env variable, then on-prem dingo deployment
+    if (credentials.isStringValue("host")){
+    	userName = credentials.getStringValue("username");
+    	passWord = credentials.getStringValue("password");
+    	uri = credentials.getStringValue("uri");
+    	host = uri.substring(uri.lastIndexOf("@") + 1 , uri.length());
+    }
+    else{
+    	//assuming that we are using PWS 
+    	uri = credentials.getStringValue("uri");
+    	host = uri.substring(uri.lastIndexOf("@") + 1 , uri.length());
+    	userName = uri.substring(uri.indexOf("://") + 3 , uri.length());
+    	passWord = passWord.substring(userName.indexOf(":") +1 , userName.indexOf("@"));
+    	userName = userName.substring(0, userName.indexOf(":"));
+    }
     
       while (conn == null) {
         try {
