@@ -25,11 +25,6 @@ if 'rediscloud' in vcap:
 elif 'p-redis' in vcap:
     rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['p-redis'][0]
 
-#if json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0] is not 'null'
-#    rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['rediscloud'][0]
-#if json.loads(os.environ['VCAP_SERVICES'])['p-redis'][0] is not 'null'
-#    rediscloud_service = json.loads(os.environ['VCAP_SERVICES'])['p-redis'][0]
-
 credentials = rediscloud_service['credentials']
 
 hostname = credentials['hostname'] if 'hostname' in credentials else credentials['host']
