@@ -1,6 +1,12 @@
 // parsing rediscloud credentials
 var vcap_services = process.env.VCAP_SERVICES;
-var postgreSQL_service = JSON.parse(vcap_services)["elephantsql"][0]
+
+try{
+    var postgreSQL_service = JSON.parse(vcap_services)["elephantsql"][0];
+}
+catch (e) {
+    var postgreSQL_service = JSON.parse(vcap_services)["dingo-postgresql"][0]; 
+}
 var credentials = postgreSQL_service.credentials;
 
 
